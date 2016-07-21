@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -14,70 +12,80 @@ import (
 func main() {
 	// connect to this socket
 	conn, _ := net.Dial("tcp", "127.0.0.1:9100")
+	sender := Sender{}
 	for {
-		// // read in input from stdin
-		// reader := bufio.NewReader(os.Stdin)
-		// fmt.Print("Text to send: ")
-		// text, _ := reader.ReadString('\n')
+		produceRequest := GetProduceMessagesRequest(conn)
+		produceResponse := sender.send(conn, produceRequest)
+		log.Printf("Producer Response %+v\n", produceResponse)
 
-		requestSvc := service.RequestService{}
-		//metadata request
-		// topicNames := []string{"topic1", "topic2"}
-		// request, err := requestSvc.NewMetadataRequest("client123", topicNames)
-		// if err != nil {
-		// 	log.Fatal("Error in creating metadata request")
-		// }
+		time.Sleep(1 * time.Second)
+	}
+}
 
-		// bytes, jsonErr := json.Marshal(request)
-		// if jsonErr != nil {
-		// 	log.Fatal("Error in marshalling metadata request")
-		// }
+func GetMetadataRequest(conn net.Conn) *service.Request {
+	topicNames := []string{"topic1", "topic2"}
 
-		topicName := "abc"
-		partition := int32(0)
+	requestSvc := service.RequestService{}
+	request, err := requestSvc.NewMetadataRequest("client123", topicNames)
+	if err != nil {
+		log.Fatal("Error in creating metadata request")
+	}
 
-		messageSvc := service.MessageService{}
-		message := messageSvc.NewMessage(1, 1, 1, []byte("key"), []byte("msg"))
+	return request
+}
+
+func GetProduceMessagesRequest(conn net.Conn) *service.Request {
+	requestSvc := service.RequestService{}
+	messageSvc := service.MessageService{}
+
+	topic := service.Topic{"abc", 1}
+	topics := []service.Topic{topic}
+	clientId := "client123"
+	requiredAcks := int16(1)
+	timeout := int32(60000)
+
+	var topicPartitionMessageSets []service.TopicPartitionMessageSet
+	for _, topic := range topics {
+		var partitionMessageSets []service.PartitionMessageSet
+		var i int32
+		for i = 0; i < topic.NoOfPartitions; i++ {
+			//actual messages
+			message := messageSvc.NewMessage(1, 1, 1, []byte("key"), []byte("msg"))
+			messages := []*service.Message{message}
+
+			partitionMessageSet := NewPartitionMessageSet(topic.Name, i, messages)
+			partitionMessageSets = append(partitionMessageSets, partitionMessageSet)
+		}
+		topicPartitionMessageSet := service.TopicPartitionMessageSet{TopicName: topic.Name, PartitionMessageSets: partitionMessageSets}
+		topicPartitionMessageSets = append(topicPartitionMessageSets, topicPartitionMessageSet)
+	}
+
+	request, err := requestSvc.NewProduceRequest(clientId, requiredAcks, timeout, &topicPartitionMessageSets)
+	if err != nil {
+		log.Fatal("Error in creating request")
+	}
+	log.Printf("Request %v\n", request)
+
+	return request
+}
+
+func NewPartitionMessageSet(topicName string, partition int32, messages []*service.Message) service.PartitionMessageSet {
+	var messageAndOffsets []service.MessageAndOffset
+	for _, message := range messages {
 		messageBytes, jsnErr := json.Marshal(message)
 		if jsnErr != nil {
 			log.Fatal("Error in converting msg to bytes")
 		}
 		var messageSize int32 = int32(len(messageBytes))
 		messageAndOffset := service.MessageAndOffset{Offset: -1, MessageSize: messageSize, Message: *message}
-		messageSet := service.MessageSet{MessageAndOffsets: []service.MessageAndOffset{messageAndOffset}}
-		messageSetBytes, jsnErr := json.Marshal(messageSet)
-		if jsnErr != nil {
-			log.Fatal("Error in converting msg to bytes")
-		}
-		messageSetSize := int32(len(messageSetBytes))
-
-		partitionMessageSet := service.PartitionMessageSet{Partition: partition, MessageSetSize: messageSetSize, MessageSet: messageSet}
-		partitionMessageSets := []service.PartitionMessageSet{partitionMessageSet}
-
-		topicPartitionMessageSet := service.TopicPartitionMessageSet{TopicName: topicName, PartitionMessageSets: partitionMessageSets}
-		topicPartitionMessageSets := []service.TopicPartitionMessageSet{topicPartitionMessageSet}
-
-		request, err := requestSvc.NewProduceRequest("client123", 1, 60000, &topicPartitionMessageSets)
-		if err != nil {
-			log.Fatal("Error in creating request")
-		}
-		log.Printf("Request %v\n", request)
-
-		bytes, jsonErr := json.Marshal(request)
-		if jsonErr != nil {
-			log.Fatal("Error in marshalling request")
-		}
-
-		log.Printf("Sending bytes: %s\n", string(bytes[:]))
-		conn.Write(bytes)
-		conn.Write([]byte("\n"))
-
-		// // send to socket
-		// fmt.Fprintf(conn, text+"\n")
-		// listen for reply
-		rmessage, _ := bufio.NewReader(conn).ReadString('\n')
-		fmt.Print("Message from server: " + rmessage)
-
-		time.Sleep(1 * time.Second)
+		messageAndOffsets = append(messageAndOffsets, messageAndOffset)
 	}
+
+	messageSet := service.MessageSet{MessageAndOffsets: messageAndOffsets}
+	messageSetBytes, jsnErr := json.Marshal(messageSet)
+	if jsnErr != nil {
+		log.Fatal("Error in converting msg to bytes")
+	}
+	messageSetSize := int32(len(messageSetBytes))
+	return service.PartitionMessageSet{Partition: partition, MessageSetSize: messageSetSize, MessageSet: messageSet}
 }

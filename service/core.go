@@ -56,7 +56,7 @@ type Node struct {
 
 type Topic struct {
 	Name           string `json:"name"`
-	NoOfPartitions int    `json:"partitions"`
+	NoOfPartitions int32  `json:"partitions"`
 }
 
 type Partition struct {
