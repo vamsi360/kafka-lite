@@ -77,7 +77,10 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 				log.Println("Error in produce request")
 				break
 			}
-			response = this.produceMessage(&produceRequest)
+			produceResponse := this.produceMessage(&produceRequest)
+			produceResponseBytes, _ := json.Marshal(produceResponse)
+			responseService := &service.ResponseService{}
+			response = responseService.NewResponse(inputRequest.CorrelationId, produceResponseBytes)
 		default:
 			log.Printf("Un-supported apiKey %d - returning nil\n", apiKey)
 			response = nil
@@ -92,28 +95,38 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 	}
 }
 
-func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.Response {
+func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.ProduceResponse {
 	log.Printf("Received ProduceRequest %v\n", produceRequest)
-
+	chanMap := make(map[string][]chan *service.PartitionProduceResponse)
 	topicPartitionMessageSets := produceRequest.TopicPartitionMessageSets
 	for _, topicPartitionMessageSet := range topicPartitionMessageSets {
 		topicName := topicPartitionMessageSet.TopicName
 		partitionMessageSets := topicPartitionMessageSet.PartitionMessageSets
-		for _, partitionMessageSet := range partitionMessageSets {
+		chanMap[topicName] = make([]chan *service.PartitionProduceResponse, len(topicPartitionMessageSet.PartitionMessageSets))
+		for idx, partitionMessageSet := range partitionMessageSets {
 			partition := partitionMessageSet.Partition
 			messageSet := partitionMessageSet.MessageSet
-			for _, messageAndOffset := range messageSet.MessageAndOffsets {
-				log.Printf("topic: %s; partition: %d, offset: %d; messageSize: %d; message: %+v\n",
-					topicName, partition, messageAndOffset.Offset, messageAndOffset.MessageSize, messageAndOffset.Message)
-			}
+
+			storageService := storage.Service{TopicName:topicName,Partition:partition}
+			respChan := make(chan *service.PartitionProduceResponse)
+			storageService.WriteMessages(&messageSet, &respChan)
+			chanMap[topicName][idx] = respChan
 		}
 	}
-
-	topicName := "abc"
-	partitionId := 0
-	var messages []*service.Message = []*service.Message{}
-	respChan := make(chan *service.Response)
+	produceResponse := service.ProduceResponse{make([]*service.TopicPartitionProduceResponse, 0, len(topicPartitionMessageSets))}
+	for topic, chans := range chanMap {
+		topicPartitionProduceResponse := &service.TopicPartitionProduceResponse{topic, make([]*service.PartitionProduceResponse, len(chans))}
+		for idx, ch := range chans {
+			topicPartitionProduceResponse.PartitionProduceResponses[idx] = <- ch
+		}
+		produceResponse.TopicPartitionProduceResponses = append(produceResponse.TopicPartitionProduceResponses, topicPartitionProduceResponse)
+	}
+	//topicName := "abc"
+	//partitionId := 0
+	//var messages []*service.Message = []*service.Message{}
+	//respChan := make(chan *service.Response)
 	// write message to storage layer
-	storage.WriteMessages(topicName, partitionId, messages, &respChan)
-	return <-respChan
+	//storage.WriteMessages(topicName, partitionId, messages, &respChan)
+	//return <-respChan
+	return &produceResponse
 }

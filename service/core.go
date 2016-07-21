@@ -109,9 +109,9 @@ type PartitionProduceResponse struct {
 
 type TopicPartitionProduceResponse struct {
 	TopicName                 string                     `json:"topicName"`
-	PartitionProduceResponses []PartitionProduceResponse `json:"partitionProduceResponses"`
+	PartitionProduceResponses []*PartitionProduceResponse `json:"partitionProduceResponses"`
 }
 
 type ProduceResponse struct {
-	TopicPartitionProduceResponses []TopicPartitionProduceResponse `json:"topicPartitionProduceResponses"`
+	TopicPartitionProduceResponses []*TopicPartitionProduceResponse `json:"topicPartitionProduceResponses"`
 }
