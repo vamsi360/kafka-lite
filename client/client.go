@@ -42,8 +42,9 @@ func GetProduceMessagesRequest(conn net.Conn) *service.Request {
 	requestSvc := service.RequestService{}
 	messageSvc := service.MessageService{}
 
-	topic := service.Topic{"abc", 1}
-	topics := []service.Topic{topic}
+	topic1 := service.Topic{"topic1", 2}
+	topic2 := service.Topic{"topic2", 2}
+	topics := []service.Topic{topic1, topic2}
 	clientId := "client123"
 	requiredAcks := int16(1)
 	timeout := int32(60000)
