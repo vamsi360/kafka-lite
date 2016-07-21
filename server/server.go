@@ -2,9 +2,12 @@ package server
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
+
+	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
 const (
@@ -51,10 +54,30 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 			log.Println("Error in reading bytes - ignoring - please retry", err)
 			break
 		}
-		log.Println("=>Message received: ", string(bytes[:]))
+		var inputRequest service.Request
+		err = json.Unmarshal(bytes, &inputRequest)
+		if err != nil {
+			log.Println("Error in unmarshalling input request", err)
+		}
+		log.Printf("=>Msg received: %v\n", inputRequest)
 
-		outBytes := []byte("hello client!\n")
-		conn.Write(outBytes)
-		log.Printf("Wrote response bytes to the client: %s", string(outBytes[:]))
+		var response *service.Response
+
+		apiKey := inputRequest.ApiKey
+		switch apiKey {
+		case service.API_KEY_METADATA:
+			metadataSvc := service.MetadataService{}
+			response = metadataSvc.GetMetadataResponse()
+		default:
+			log.Printf("Un-supported apiKey %d - returning nil\n", apiKey)
+			response = nil
+		}
+
+		responseBytes, respErr := json.Marshal(response)
+		if respErr == nil {
+			conn.Write(responseBytes)
+			conn.Write([]byte("\n"))
+			log.Printf("Wrote response bytes to the client: %s", string(responseBytes[:]))
+		}
 	}
 }

@@ -1,19 +1,21 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
-	"git.nm.flipkart.com/git/infra/kafka-lite/storage"
+
 	"git.nm.flipkart.com/git/infra/kafka-lite/server"
+	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
 func createTestEntities() {
 	requestSvc := service.RequestService{}
-
 	topicNames := []string{"topic1", "topic2"}
 	metadataReq, err := requestSvc.NewMetadataRequest("client123", topicNames)
 	if err == nil {
-		fmt.Println(metadataReq)
+		fmt.Printf("MetadataReq: %v\n", metadataReq)
+		reqBytes, _ := json.Marshal(*metadataReq)
+		fmt.Printf("MetadataReqJson: %s\n", string(reqBytes[:]))
 	}
 
 	messageSvc := service.MessageService{}
@@ -32,10 +34,11 @@ func createTestEntities() {
 	if err == nil {
 		fmt.Println(metadataResp)
 	}
-	messages := []*service.Message{message}
-	ch := make(chan string, 1)
-	storage.WriteMessages("abc", 0, messages, &ch)
-	<- ch
+
+	// messages := []*service.Message{message}
+	// ch := make(chan string, 1)
+	// storage.WriteMessages("abc", 0, messages, &ch)
+	// <-ch
 }
 
 func main() {

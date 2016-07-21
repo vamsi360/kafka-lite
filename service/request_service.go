@@ -6,7 +6,7 @@ type RequestService struct {
 }
 
 func (this *RequestService) NewRequest(apiKey int16, apiVersion int16, correlationId int32, clientId string, requestMessage []byte) *Request {
-	return &Request{apiKey: apiKey, apiVersion: apiVersion, correlationId: correlationId, clientId: clientId, requestMessage: requestMessage}
+	return &Request{ApiKey: apiKey, ApiVersion: apiVersion, CorrelationId: correlationId, ClientId: clientId, RequestMessage: requestMessage}
 }
 
 func (this *RequestService) NewMetadataRequest(clientId string, topicNames []string) (*Request, *Error) {

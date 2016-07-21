@@ -6,7 +6,7 @@ type ResponseService struct {
 }
 
 func (this *ResponseService) NewResponse(correlationId int32, responseMessage []byte) *Response {
-	return &Response{correlationId: correlationId, responseMessage: responseMessage}
+	return &Response{CorrelationId: correlationId, ResponseMessage: responseMessage}
 }
 
 func (this *ResponseService) NewMetadaResponse(metadata map[string]TopicMetadata) (*Response, *Error) {

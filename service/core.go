@@ -13,16 +13,16 @@ const (
 )
 
 type Request struct {
-	apiKey         int16
-	apiVersion     int16
-	correlationId  int32
-	clientId       string
-	requestMessage []byte
+	ApiKey         int16  `json:"apiKey"`
+	ApiVersion     int16  `json:"apiVersion"`
+	CorrelationId  int32  `json:"correlationId"`
+	ClientId       string `json:"clientId"`
+	RequestMessage []byte `json:"requestMessage"`
 }
 
 type Response struct {
-	correlationId   int32
-	responseMessage []byte
+	CorrelationId   int32  `json:"correlationId"`
+	ResponseMessage []byte `json:"responseMessage"`
 }
 
 type Error struct {
