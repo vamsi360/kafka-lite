@@ -31,51 +31,87 @@ type Error struct {
 }
 
 type Message struct {
-	crc        int32
-	magicByte  int8
-	attributes int8
-	key        []byte
-	value      []byte
+	Crc        int32  `json:"crc"`
+	MagicByte  int8   `json:"magicByte"`
+	Attributes int8   `json:"attributes"`
+	Key        []byte `json:"key"`
+	Value      []byte `json:"value"`
+}
+
+type MessageAndOffset struct {
+	Offset      int64   `json:"offset"`
+	MessageSize int32   `json:"messageSize"`
+	Message     Message `json:"message"`
 }
 
 type MessageSet struct {
-	Offset      int64
-	MessageSize int32
-	Message     []Message
+	MessageAndOffsets []MessageAndOffset `json:"messageSet"`
 }
 
 type Node struct {
-	Id   int
-	Host string
-	Port int
+	Id   int    `json:"id"`
+	Host string `json:"host"`
+	Port int    `json:"port"`
 }
 
 type Topic struct {
-	Name           string
-	NoOfPartitions int
+	Name           string `json:"name"`
+	NoOfPartitions int    `json:"partitions"`
 }
 
 type Partition struct {
-	Id   int
-	Desc string
+	Id   int    `json:"id"`
+	Desc string `json:"desc"`
 }
 
 type TopicPartition struct {
-	Topic        Topic
-	Partition    Partition
-	LeaderNode   Node
-	ReplicaNodes []Node
+	Topic        Topic     `json:"topic"`
+	Partition    Partition `json:"partition"`
+	LeaderNode   Node      `json:"leaderNode"`
+	ReplicaNodes []Node    `json:"replicaNodes"`
 }
 
 type TopicMetadata struct {
-	TopicName       string
-	TopicPartitions []TopicPartition
+	TopicName       string           `json:"topicName"`
+	TopicPartitions []TopicPartition `json:"topicPartitions"`
 }
 
 type MetadataRequest struct {
-	TopicNames []string
+	TopicNames []string `json:"topicNames"`
 }
 
 type MetadataResponse struct {
-	Metadata map[string]TopicMetadata
+	Metadata map[string]TopicMetadata `json:"metadata"`
+}
+
+type PartitionMessageSet struct {
+	Partition      int32      `json:"partition"`
+	MessageSetSize int32      `json:"messageSetSize"`
+	MessageSet     MessageSet `json:"messageSet"`
+}
+
+type TopicPartitionMessageSet struct {
+	TopicName            string                `json:"topicName"`
+	PartitionMessageSets []PartitionMessageSet `json:"partitionMessageSets"`
+}
+
+type ProduceRequest struct {
+	RequiredAcks              int16                      `json:"requiredAcks"`
+	Timeout                   int32                      `json:"timeout"`
+	TopicPartitionMessageSets []TopicPartitionMessageSet `json:"topicPartitionMessageSets"`
+}
+
+type PartitionProduceResponse struct {
+	Partition int32 `json:"partition"`
+	ErrorCode int16 `json:"errorCode"`
+	Offset    int64 `json:"offset"`
+}
+
+type TopicPartitionProduceResponse struct {
+	TopicName                 string                     `json:"topicName"`
+	PartitionProduceResponses []PartitionProduceResponse `json:"partitionProduceResponses"`
+}
+
+type ProduceResponse struct {
+	TopicPartitionProduceResponses []TopicPartitionProduceResponse `json:"topicPartitionProduceResponses"`
 }

@@ -1,16 +1,17 @@
 package storage
 
 import (
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
-	"os"
-	"strconv"
 	"bufio"
 	"fmt"
+	"os"
+	"strconv"
+
+	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
-const BaseDir  = "/tmp/kafka-lite/data"
+const BaseDir = "/tmp/kafka-lite/data"
 
-var(
+var (
 	handlers = make(map[string]map[int]bool)
 )
 
@@ -20,7 +21,7 @@ func WriteMessage1(msg service.Message) {
 
 func generateHandler(TopicName string, PartitionId int) {
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(PartitionId) + "/" + strconv.Itoa(0)
-	f, _ := os.OpenFile(filePath, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	f, _ := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	handler := bufio.NewWriter(f)
 	// read from persistant layer
 	offset := 0
@@ -33,11 +34,14 @@ func generateHandler(TopicName string, PartitionId int) {
 			offset += 1
 			size, err := handler.WriteString(string(message))
 			position += size
-			fmt.Println( string(message),size, err, offset, position, handler.Buffered() )
+			fmt.Println(string(message), size, err, offset, position, handler.Buffered())
 		}
 		fmt.Println(handler.Flush())
 		fmt.Println(f.Sync())
-		*request.RespChan <- "done"
+
+		//construct response object
+		response := service.Response{CorrelationId: 1, ResponseMessage: []byte("responseMsg")}
+		*request.RespChan <- &response
 	}
 }
 
@@ -45,8 +49,8 @@ func generateRoutine(TopicName string, PartitionId int) {
 	if handlers[TopicName] == nil {
 		handlers[TopicName] = make(map[int]bool)
 	}
-	if ! handlers[TopicName][PartitionId]{
-		os.MkdirAll(BaseDir + "/" + TopicName + "/" + strconv.Itoa(PartitionId), 0666)
+	if !handlers[TopicName][PartitionId] {
+		os.MkdirAll(BaseDir+"/"+TopicName+"/"+strconv.Itoa(PartitionId), 0666)
 		go generateHandler(TopicName, PartitionId)
 		handlers[TopicName][PartitionId] = true
 	}
@@ -61,7 +65,9 @@ func getMeta() map[string][]int {
 func init() {
 	go func() {
 		for topic, partitions := range getMeta() {
-			if partitions == nil {continue}
+			if partitions == nil {
+				continue
+			}
 			for _, partition := range partitions {
 				generateRoutine(topic, partition)
 			}
@@ -69,4 +75,3 @@ func init() {
 
 	}()
 }
-

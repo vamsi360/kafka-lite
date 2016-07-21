@@ -16,3 +16,12 @@ func (this *RequestService) NewMetadataRequest(clientId string, topicNames []str
 	}
 	return nil, &Error{code: 2, msg: "Unable to serialize topicNames to json"}
 }
+
+func (this *RequestService) NewProduceRequest(clientId string, requiredAcks int16, timeout int32, topicPartitionMessageSets *[]TopicPartitionMessageSet) (*Request, *Error) {
+	produceRequest := ProduceRequest{RequiredAcks: requiredAcks, Timeout: timeout, TopicPartitionMessageSets: *topicPartitionMessageSets}
+	bytes, err := json.Marshal(produceRequest)
+	if err == nil {
+		return this.NewRequest(API_KEY_PRODUCE, 1, 1, clientId, bytes), nil
+	}
+	return nil, &Error{code: 2, msg: "Unable to serialize topicNames to json"}
+}

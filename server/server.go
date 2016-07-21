@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"git.nm.flipkart.com/git/infra/kafka-lite/storage"
 )
 
 const (
@@ -68,6 +69,15 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 		case service.API_KEY_METADATA:
 			metadataSvc := service.MetadataService{}
 			response = metadataSvc.GetMetadataResponse()
+		case service.API_KEY_PRODUCE:
+			requestMessageBytes := inputRequest.RequestMessage
+			var produceRequest service.ProduceRequest
+			produceReqErr := json.Unmarshal(requestMessageBytes, &produceRequest)
+			if produceReqErr != nil {
+				log.Println("Error in produce request")
+				break
+			}
+			response = this.produceMessage(&produceRequest)
 		default:
 			log.Printf("Un-supported apiKey %d - returning nil\n", apiKey)
 			response = nil
@@ -80,4 +90,16 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 			log.Printf("Wrote response bytes to the client: %s", string(responseBytes[:]))
 		}
 	}
+}
+
+func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.Response {
+	log.Printf("Received ProduceRequest %v\n", produceRequest)
+
+	topicName := "abc"
+	partitionId := 0
+	var messages []*service.Message = []*service.Message{}
+	respChan := make(chan *service.Response)
+	// write message to storage layer
+	storage.WriteMessages(topicName, partitionId, messages, &respChan)
+	return <-respChan
 }
