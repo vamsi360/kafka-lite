@@ -10,3 +10,5 @@ tramp
 
 .idea
 *.iml
+
+kafka-lite
