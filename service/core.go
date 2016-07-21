@@ -1,10 +1,4 @@
-package core
-
-import (
-	"encoding/json"
-
-	"github.com/satori/go.uuid"
-)
+package service
 
 const (
 	API_KEY_PRODUCE             = 0
@@ -19,16 +13,16 @@ const (
 )
 
 type Request struct {
-	ApiKey         int16
-	ApiVersion     int16
-	CorrelationId  int32
-	ClientId       string
-	RequestMessage []byte
+	apiKey         int16
+	apiVersion     int16
+	correlationId  int32
+	clientId       string
+	requestMessage []byte
 }
 
 type Response struct {
-	CorrelationId   int32
-	ResponseMessage []byte
+	correlationId   int32
+	responseMessage []byte
 }
 
 type Error struct {
@@ -82,22 +76,6 @@ type MetadataRequest struct {
 	TopicNames []string
 }
 
-func NewMetadataRequest(clientId string, topicNames *[]string) *Request {
-	bytes, err := json.Marshal(topicNames)
-	if err != nil {
-		return Request{ApiKey: API_KEY_METATDATA, ApiVersion: 1, CorrelationId: uuid.NewV4(), ClientId: clientId, RequestMessage: bytes}
-	}
-	return Error{Code: 2, Msg: "Unable to serialize topicNames"}
-}
-
 type MetadataResponse struct {
 	Metadata map[string]TopicMetadata
-}
-
-func NewMetadaResponse(metadata *map[string]TopicMetadata) *Response {
-	bytes, err := json.Marshal(metadata)
-	if err != nil {
-		return Response{CorrelationId: uuid.NewV4(), ResponseMessage: bytes}
-	}
-	return Error{Code: 2, Msg: "Unable to serialize topicNames"}
 }
