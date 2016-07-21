@@ -1,17 +1,13 @@
 package storage
 
-import (
-	"fmt"
+import "git.nm.flipkart.com/git/infra/kafka-lite/service"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
-)
-
-type Service struct  {
+type Service struct {
 	TopicName string
 	Partition int32
 }
 
-func(service *Service) WriteMessages(messageSet *service.MessageSet, respChan *chan *service.PartitionProduceResponse) (err error) {
+func (service *Service) WriteMessages(messageSet *service.MessageSet, respChan *chan *service.PartitionProduceResponse) (err error) {
 	msg := MessageRequest{Messages: make([][]byte, len(messageSet.MessageAndOffsets)), RespChan: respChan}
 	for idx, messageAndOffset := range messageSet.MessageAndOffsets {
 		if bytes, err := messageAndOffset.Message.SerializeJson(); err != nil {
@@ -20,12 +16,11 @@ func(service *Service) WriteMessages(messageSet *service.MessageSet, respChan *c
 			msg.Messages[idx] = bytes
 		}
 	}
-	fmt.Println("abc")
 	messageChan(service.TopicName, service.Partition) <- msg
 	return nil
 }
 
-func(service *Service) ReadMessages(offset int, count int) error {
+func (service *Service) ReadMessages(offset int, count int) error {
 
 	return nil
 }

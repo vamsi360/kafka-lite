@@ -2,11 +2,13 @@ package storage
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
-	"encoding/json"
 )
 
 const BaseDir = "/tmp/kafka-lite/data"
@@ -27,7 +29,7 @@ func generateHandler(TopicName string, PartitionId int32) {
 		fmt.Println("1")
 		request := <-messageChan
 		fmt.Println("2")
-		response := service.PartitionProduceResponse{Partition: PartitionId, ErrorCode: 0, Offset:offset}
+		response := service.PartitionProduceResponse{Partition: PartitionId, ErrorCode: 0, Offset: offset}
 		for _, message := range request.Messages {
 			offset += 1
 			size, err := handler.Write(message)
@@ -47,8 +49,8 @@ func generateRoutine(TopicName string, PartitionId int32) {
 		handlers[TopicName] = make(map[int32]bool)
 	}
 
-	if ! handlers[TopicName][PartitionId]{
-		os.MkdirAll(BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)), 0666)
+	if !handlers[TopicName][PartitionId] {
+		os.MkdirAll(BaseDir+"/"+TopicName+"/"+strconv.Itoa(int(PartitionId)), 0777)
 		messageChanMap[TopicName] = make(map[int32](chan MessageRequest))
 		messageChanMap[TopicName][PartitionId] = make(chan MessageRequest)
 		go generateHandler(TopicName, PartitionId)
@@ -61,18 +63,20 @@ func getMeta() map[string][]int32 {
 	nodeId := 1
 	metadataService := service.MetadataService{}
 	response := metadataService.GetMetadataResponse()
-	if response == nil { panic("unable to get metadata")}
+	if response == nil {
+		panic("unable to get metadata")
+	}
 	var topicMetadataMap map[string]service.TopicMetadata
 	json.Unmarshal(response.ResponseMessage, &topicMetadataMap)
 	for topicName, topicMetadata := range topicMetadataMap {
 		m[topicName] = make([]int32, 0, len(topicMetadata.TopicPartitions))
 		for _, topicPartition := range topicMetadata.TopicPartitions {
-			if (topicPartition.LeaderNode.Id == nodeId) {
+			if topicPartition.LeaderNode.Id == nodeId {
 				m[topicName] = append(m[topicName], int32(topicPartition.Partition.Id))
 			}
 		}
 	}
-	fmt.Println(m)
+	log.Println(m)
 	return m
 }
 
