@@ -10,9 +10,10 @@ func WriteMessages(Topic string, PartitionId int, messages []*service.Message, r
 	msg := MessageRequest{Messages:make([][]byte, len(messages)), RespChan:respChan}
 	for idx, message := range messages {
 		if bytes, err := message.SerializeJson() ; err != nil{
+			return err
+		}else {
 			msg.Messages[idx] = bytes
 		}
-		return err
 	}
 	fmt.Println("abc")
 	messageChan <- msg

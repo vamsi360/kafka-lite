@@ -41,10 +41,10 @@ func createTestEntities() {
 func main() {
 	config := &server.ServerConfig{Host: "localhost", Port: 9100}
 	fmt.Printf("== Starting server on port %d ==\n", config.Port)
+	defer fmt.Println("== Stopping server ==")
 
 	//createTestEntities()
 	server := server.SocketServer{config}
 	server.Start()
 
-	fmt.Println("== Stopping server ==")
 }

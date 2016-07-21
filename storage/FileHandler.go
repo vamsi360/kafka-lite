@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-const BaseDir  = "/var/kafka-lite/data"
+const BaseDir  = "/tmp/kafka-lite/data"
 
 var(
 	handlers = make(map[string]map[int]bool)
@@ -31,11 +31,12 @@ func generateHandler(TopicName string, PartitionId int) {
 		fmt.Println("2")
 		for _, message := range request.Messages {
 			offset += 1
-			size, err := handler.Write(message)
-			fmt.Println(err.Error(), size)
+			size, err := handler.WriteString(string(message))
 			position += size
+			fmt.Println( string(message),size, err, offset, position, handler.Buffered() )
 		}
-		f.Sync()
+		fmt.Println(handler.Flush())
+		fmt.Println(f.Sync())
 		*request.RespChan <- "done"
 	}
 }
