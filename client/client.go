@@ -59,12 +59,13 @@ func main() {
 
 		request, err := requestSvc.NewProduceRequest("client123", 1, 60000, &topicPartitionMessageSets)
 		if err != nil {
-			log.Fatal("Error in creating metadata request")
+			log.Fatal("Error in creating request")
 		}
+		log.Printf("Request %v\n", request)
 
 		bytes, jsonErr := json.Marshal(request)
 		if jsonErr != nil {
-			log.Fatal("Error in marshalling metadata request")
+			log.Fatal("Error in marshalling request")
 		}
 
 		log.Printf("Sending bytes: %s\n", string(bytes[:]))

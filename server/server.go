@@ -95,6 +95,20 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.Response {
 	log.Printf("Received ProduceRequest %v\n", produceRequest)
 
+	topicPartitionMessageSets := produceRequest.TopicPartitionMessageSets
+	for _, topicPartitionMessageSet := range topicPartitionMessageSets {
+		topicName := topicPartitionMessageSet.TopicName
+		partitionMessageSets := topicPartitionMessageSet.PartitionMessageSets
+		for _, partitionMessageSet := range partitionMessageSets {
+			partition := partitionMessageSet.Partition
+			messageSet := partitionMessageSet.MessageSet
+			for _, messageAndOffset := range messageSet.MessageAndOffsets {
+				log.Printf("topic: %s; partition: %d, offset: %d; messageSize: %d; message: %+v\n",
+					topicName, partition, messageAndOffset.Offset, messageAndOffset.MessageSize, messageAndOffset.Message)
+			}
+		}
+	}
+
 	topicName := "abc"
 	partitionId := 0
 	var messages []*service.Message = []*service.Message{}
