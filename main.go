@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-
-	"git.nm.flipkart.com/git/infra/kafka-lite/server"
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"git.nm.flipkart.com/git/infra/kafka-lite/storage"
+	"git.nm.flipkart.com/git/infra/kafka-lite/server"
 )
 
 func createTestEntities() {
@@ -32,6 +32,10 @@ func createTestEntities() {
 	if err == nil {
 		fmt.Println(metadataResp)
 	}
+	messages := []*service.Message{message}
+	ch := make(chan string, 1)
+	storage.WriteMessages("abc", 0, messages, &ch)
+	<- ch
 }
 
 func main() {
