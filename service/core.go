@@ -31,11 +31,11 @@ type Error struct {
 }
 
 type Message struct {
-	Crc        int32
-	MagicByte  int8
-	Attributes int8
-	Key        []byte
-	Value      []byte
+	crc        int32
+	magicByte  int8
+	attributes int8
+	key        []byte
+	value      []byte
 }
 
 type MessageSet struct {
@@ -47,7 +47,7 @@ type MessageSet struct {
 type Node struct {
 	Id   int
 	Host string
-	Port string
+	Port int
 }
 
 type Topic struct {
