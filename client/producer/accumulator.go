@@ -1,15 +1,15 @@
 package producer
 
-import (
-	"git.nm.flipkart.com/git/infra/kafka-lite/client/core"
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
-)
+import "git.nm.flipkart.com/git/infra/kafka-lite/client/core"
 
 type Accumulator struct {
-	Topics        *[]service.Topic
-	topicChannels map[string]chan *core.ProducerRecord
+	TopicAndPartitions *[]core.TopicAndPartition
+	recordChannels     *map[TopicAndPartition]chan *core.ProducerRecord
 }
 
 func (this *Accumulator) append(record *core.ProducerRecord) {
+	recordChannel := recordChannels[record.TopicAndPartition]
+	if recordChannel == nil {
 
+	}
 }
