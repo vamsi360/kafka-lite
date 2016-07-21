@@ -14,6 +14,10 @@ func main() {
 	conn, _ := net.Dial("tcp", "127.0.0.1:9100")
 	sender := Sender{}
 	for {
+		metadataRequest := GetMetadataRequest(conn)
+		metadataResponse := sender.send(conn, metadataRequest)
+		log.Printf("Metadata Response %+v\n", metadataResponse)
+
 		produceRequest := GetProduceMessagesRequest(conn)
 		produceResponse := sender.send(conn, produceRequest)
 		log.Printf("Producer Response %+v\n", produceResponse)
