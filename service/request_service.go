@@ -9,10 +9,10 @@ func (this *RequestService) NewRequest(apiKey int16, apiVersion int16, correlati
 	return &Request{apiKey: apiKey, apiVersion: apiVersion, correlationId: correlationId, clientId: clientId, requestMessage: requestMessage}
 }
 
-func (this *RequestService) NewMetadataRequest(clientId string, topicNames []string) *Request {
+func (this *RequestService) NewMetadataRequest(clientId string, topicNames []string) (*Request, *Error) {
 	bytes, err := json.Marshal(topicNames)
-	if err != nil {
-		return this.NewRequest(API_KEY_METADATA, 1, 1, clientId, bytes)
+	if err == nil {
+		return this.NewRequest(API_KEY_METADATA, 1, 1, clientId, bytes), nil
 	}
-	return nil
+	return nil, &Error{code: 2, msg: "Unable to serialize topicNames to json"}
 }

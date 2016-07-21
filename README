@@ -1,3 +1,8 @@
 Kafka-lite
 
 Building a lite version of Kafka for fun and to solve some painpoints
+
+Running:
+
+go build
+./kafka-lite

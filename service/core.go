@@ -26,8 +26,8 @@ type Response struct {
 }
 
 type Error struct {
-	Code int
-	Msg  string
+	code int
+	msg  string
 }
 
 type Message struct {

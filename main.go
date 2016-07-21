@@ -8,7 +8,8 @@ func main() {
 
 	topicNames := []string{"topic1", "topic2"}
 	requestSvc := service.RequestService{}
-	metadataRequest := requestSvc.NewMetadataRequest("client123", topicNames)
-
-	fmt.Println(metadataRequest)
+	metadataReq, err := requestSvc.NewMetadataRequest("client123", topicNames)
+	if err == nil {
+		fmt.Println(metadataReq)
+	}
 }

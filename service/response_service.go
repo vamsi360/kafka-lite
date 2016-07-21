@@ -9,10 +9,10 @@ func (this *ResponseService) NewResponse(correlationId int32, responseMessage []
 	return &Response{correlationId: correlationId, responseMessage: responseMessage}
 }
 
-func (this *ResponseService) NewMetadaResponse(metadata *map[string]TopicMetadata) *Response {
+func (this *ResponseService) NewMetadaResponse(metadata *map[string]TopicMetadata) (*Response, *Error) {
 	bytes, err := json.Marshal(metadata)
-	if err != nil {
-		return this.NewResponse(1, bytes)
+	if err == nil {
+		return this.NewResponse(1, bytes), nil
 	}
-	return nil
+	return nil, &Error{code: 2, msg: "Unable to serialize topicNames to json"}
 }
