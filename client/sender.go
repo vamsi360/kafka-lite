@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 
@@ -19,12 +18,12 @@ func (this *Sender) send(conn net.Conn, request *service.Request) *service.Respo
 		log.Fatal("Error in marshalling request")
 	}
 
-	log.Printf("Sending bytes: %s\n", string(bytes[:]))
+	// log.Printf("Sending bytes: %s\n", string(bytes[:]))
 	conn.Write(bytes)
 	conn.Write([]byte("\n"))
 
 	respBytes, _ := bufio.NewReader(conn).ReadBytes('\n')
-	fmt.Print("Message from server: " + string(respBytes))
+	// fmt.Print("Message from server: " + string(respBytes))
 
 	var response service.Response
 	jsonErr = json.Unmarshal(respBytes, &response)

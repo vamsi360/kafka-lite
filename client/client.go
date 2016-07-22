@@ -27,11 +27,11 @@ func main() {
 
 		produceRequest := GetProduceMessagesRequest(conn, metadata)
 		produceResponse := sender.send(conn, produceRequest)
-		log.Printf("Producer Response %+v\n", produceResponse)
+		log.Printf("Producer Response %+v\n", string(produceResponse.ResponseMessage[:]))
 
 		fetchRequest := GetFetchMessagesRequest(conn, metadata)
 		fetchResponse := sender.send(conn, fetchRequest)
-		log.Printf("Fetch Response %+v\n", fetchResponse)
+		log.Printf("Fetch Response %+v\n", string(fetchResponse.ResponseMessage[:]))
 
 		time.Sleep(1 * time.Second)
 	}
@@ -39,7 +39,6 @@ func main() {
 
 func GetMetadataRequest(conn net.Conn) *service.Request {
 	topicNames := []string{"topic1", "topic2"}
-
 	requestSvc := service.RequestService{}
 	request, err := requestSvc.NewMetadataRequest("client123", topicNames)
 	if err != nil {
@@ -77,7 +76,6 @@ func GetFetchMessagesRequest(conn net.Conn, metadata map[string]service.TopicMet
 	if err != nil {
 		log.Fatal("Error in creating request")
 	}
-	log.Printf("Request %v\n", request)
 
 	return request
 }
@@ -118,8 +116,6 @@ func GetProduceMessagesRequest(conn net.Conn, metadata map[string]service.TopicM
 	if err != nil {
 		log.Fatal("Error in creating request")
 	}
-	log.Printf("Request %v\n", request)
-
 	return request
 }
 
