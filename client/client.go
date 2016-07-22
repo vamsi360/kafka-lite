@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net"
-	"time"
 
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
@@ -13,27 +12,39 @@ func main() {
 	// connect to this socket
 	conn, _ := net.Dial("tcp", "127.0.0.1:9100")
 	sender := Sender{}
+	metadataRequest := GetMetadataRequest(conn)
+	metadataResponse := sender.send(conn, metadataRequest)
+
+	responseMessage := metadataResponse.ResponseMessage
+	var metadata map[string]service.TopicMetadata
+	err := json.Unmarshal(responseMessage, &metadata)
+	if err != nil {
+		log.Println("Error in Metadata response un-marshalling")
+	}
+	log.Printf("Got Metadata Response\n")
+
+	produceResponses := []service.Response{}
+	fetchResponses := []service.Response{}
+	count := 0
 	for {
-		metadataRequest := GetMetadataRequest(conn)
-		metadataResponse := sender.send(conn, metadataRequest)
-
-		responseMessage := metadataResponse.ResponseMessage
-		var metadata map[string]service.TopicMetadata
-		err := json.Unmarshal(responseMessage, &metadata)
-		if err != nil {
-			log.Println("Error in Metadata response un-marshalling")
-		}
-		log.Printf("MetadataResp: %+v\n", metadata)
-
 		produceRequest := GetProduceMessagesRequest(conn, metadata)
 		produceResponse := sender.send(conn, produceRequest)
-		log.Printf("Producer Response %+v\n", string(produceResponse.ResponseMessage[:]))
+		produceResponses = append(produceResponses, *produceResponse)
+		// log.Printf("Producer Response bytes size %d\n", len(produceResponse.ResponseMessage))
 
 		fetchRequest := GetFetchMessagesRequest(conn, metadata)
 		fetchResponse := sender.send(conn, fetchRequest)
-		log.Printf("Fetch Response %+v\n", string(fetchResponse.ResponseMessage[:]))
+		fetchResponses = append(fetchResponses, *fetchResponse)
+		// log.Printf("Fetch Response bytes size %d\n", len(fetchResponse.ResponseMessage))
 
-		time.Sleep(1 * time.Second)
+		count += 1
+		if count%100 == 0 {
+			log.Printf("%d produce&consume requests done", count)
+			// time.Sleep(10 * time.Millisecond)
+
+			produceResponses = []service.Response{}
+			fetchResponses = []service.Response{}
+		}
 	}
 }
 

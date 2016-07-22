@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"runtime"
 
 	"git.nm.flipkart.com/git/infra/kafka-lite/server"
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
@@ -44,8 +45,9 @@ func createTestEntities() {
 }
 
 func main() {
-	config := &server.ServerConfig{}
+	runtime.GOMAXPROCS(1)
 
+	config := &server.ServerConfig{}
 	bytes, err := ioutil.ReadFile("serverconfig.json")
 	if err != nil {
 		log.Fatal("Error in reading config")

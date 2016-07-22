@@ -113,7 +113,7 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 }
 
 func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.ProduceResponse {
-	//log.Printf("Received ProduceRequest %+v\n", produceRequest)
+	// log.Printf("Received ProduceRequest with requiredAcks %d\n", produceRequest.RequiredAcks)
 
 	chanMap := make(map[string][]chan *service.PartitionProduceResponse)
 	topicPartitionMessageSets := produceRequest.TopicPartitionMessageSets
@@ -143,7 +143,7 @@ func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest)
 }
 
 func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *service.FetchResponse {
-	//log.Printf("Received FetchReqeust %+v\n", fetchRequest)
+	// log.Printf("Received FetchReqeust for %d minBytes from replicaId %d\n", fetchRequest.MinBytes, fetchRequest.ReplicaId)
 
 	topicPartitionFetchResponses := []service.TopicPartitionFetchResponse{}
 	topicPartitionOffsets := fetchRequest.TopicPartitionOffsets
