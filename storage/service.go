@@ -20,7 +20,7 @@ func (service *Service) WriteMessages(messageSet *service.MessageSet, respChan *
 	return nil
 }
 
-func (service *Service) ReadMessages(offset int, count int) error {
+func (service *Service) ReadMessages(offset int, maxBytes int) error {
 
 	return nil
 }
