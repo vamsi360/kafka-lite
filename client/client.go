@@ -29,6 +29,10 @@ func main() {
 		produceResponse := sender.send(conn, produceRequest)
 		log.Printf("Producer Response %+v\n", produceResponse)
 
+		fetchRequest := GetFetchMessagesRequest(conn, metadata)
+		fetchResponse := sender.send(conn, fetchRequest)
+		log.Printf("Producer Response %+v\n", fetchResponse)
+
 		time.Sleep(1 * time.Second)
 	}
 }
@@ -45,10 +49,37 @@ func GetMetadataRequest(conn net.Conn) *service.Request {
 	return request
 }
 
-func GetFetchMessagesRequest(conn net.Conn) *service.Request {
-	// var topicPartitionOffsets []service.TopicPartitionOffset
+func GetFetchMessagesRequest(conn net.Conn, metadata map[string]service.TopicMetadata) *service.Request {
+	topics := []service.Topic{}
+	for topicName := range metadata {
+		topicMetadata := metadata[topicName]
+		partitions := int32(len(topicMetadata.TopicPartitions))
+		topic := service.Topic{topicName, partitions}
+		topics = append(topics, topic)
+	}
 
-	return nil
+	var topicPartitionOffsets []service.TopicPartitionOffset
+	for _, topic := range topics {
+		var partitionFetchOffsets []service.PartitionFetchOffset
+		var i int32
+		for i = 0; i < topic.NoOfPartitions; i++ {
+			partitionFetchOffset := service.PartitionFetchOffset{i, 0, 10240}
+			partitionFetchOffsets = append(partitionFetchOffsets, partitionFetchOffset)
+		}
+		topicPartitionOffset := service.TopicPartitionOffset{TopicName: topic.Name, PartitionFetchOffsets: partitionFetchOffsets}
+		topicPartitionOffsets = append(topicPartitionOffsets, topicPartitionOffset)
+	}
+
+	clientId := "client123"
+	requestSvc := service.RequestService{}
+
+	request, err := requestSvc.NewFetchRequest(clientId, -1, 10000, 1, &topicPartitionOffsets)
+	if err != nil {
+		log.Fatal("Error in creating request")
+	}
+	log.Printf("Request %v\n", request)
+
+	return request
 }
 
 func GetProduceMessagesRequest(conn net.Conn, metadata map[string]service.TopicMetadata) *service.Request {
@@ -58,6 +89,7 @@ func GetProduceMessagesRequest(conn net.Conn, metadata map[string]service.TopicM
 	clientId := "client123"
 	requiredAcks := int16(1)
 	timeout := int32(60000)
+
 	topics := []service.Topic{}
 	for topicName := range metadata {
 		topicMetadata := metadata[topicName]
