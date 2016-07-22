@@ -25,9 +25,9 @@ func main() {
 		}
 		log.Printf("MetadataResp: %+v\n", metadata)
 
-		produceRequest := GetProduceMessagesRequest(conn, metadata)
-		produceResponse := sender.send(conn, produceRequest)
-		log.Printf("Producer Response %+v\n", produceResponse)
+		// produceRequest := GetProduceMessagesRequest(conn, metadata)
+		// produceResponse := sender.send(conn, produceRequest)
+		// log.Printf("Producer Response %+v\n", produceResponse)
 
 		fetchRequest := GetFetchMessagesRequest(conn, metadata)
 		fetchResponse := sender.send(conn, fetchRequest)

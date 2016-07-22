@@ -7,16 +7,17 @@ import (
 	"os"
 	"strconv"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 	"io/ioutil"
+
+	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
 const BaseDir = "/tmp/kafka-lite/data"
 
 var (
-	handlers = make(map[string]map[int32]bool)
-	indexMap = make(map[string]map[int32]map[string]int)
-	currentOffset = make(map[string]map[int32]int64)
+	handlers        = make(map[string]map[int32]bool)
+	indexMap        = make(map[string]map[int32]map[string]int)
+	currentOffset   = make(map[string]map[int32]int64)
 	currentPosition = make(map[string]map[int32]int)
 )
 
@@ -31,13 +32,13 @@ func readIndex(TopicName string, PartitionId int32) (err error) {
 		currentOffset[TopicName][PartitionId] = int64(0)
 		currentPosition[TopicName][PartitionId] = 0
 		filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0)
-		if bytes, err := ioutil.ReadFile(filePath + ".index") ; err == nil{
+		if bytes, err := ioutil.ReadFile(filePath + ".index"); err == nil {
 			var idx map[string]int
-			json.Unmarshal(bytes, &idx )
+			json.Unmarshal(bytes, &idx)
 			indexMap[TopicName][PartitionId] = idx
 			currentPosition[TopicName][PartitionId] = len(bytes)
 		}
-		if bytes, err := ioutil.ReadFile(filePath + ".offset") ; err == nil{
+		if bytes, err := ioutil.ReadFile(filePath + ".offset"); err == nil {
 			var idx int64
 			json.Unmarshal(bytes, &idx)
 			currentOffset[TopicName][PartitionId] = idx
@@ -52,7 +53,7 @@ func logWriter(TopicName string, PartitionId int32, indexPersistanceCh chan bool
 	f, _ := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	messageChan := messageChan(TopicName, PartitionId)
 	filePath = BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".index"
-	idxfd, _ := os.OpenFile(filePath, os.O_WRONLY| os.O_CREATE, 0666)
+	idxfd, _ := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
 	// read from persistant layer
 	for {
 		request := <-messageChan
@@ -62,7 +63,7 @@ func logWriter(TopicName string, PartitionId int32, indexPersistanceCh chan bool
 			currentOffset[TopicName][PartitionId] += 1
 			size, err := f.Write(message)
 			currentPosition[TopicName][PartitionId] += size
-			indexMap[TopicName][PartitionId][strconv.Itoa(int(currentOffset[TopicName][PartitionId] - 1))] = currentPosition[TopicName][PartitionId]
+			indexMap[TopicName][PartitionId][strconv.Itoa(int(currentOffset[TopicName][PartitionId]-1))] = currentPosition[TopicName][PartitionId]
 			fmt.Println(string(message), size, err, currentOffset[TopicName][PartitionId], currentPosition[TopicName][PartitionId])
 		}
 		fmt.Printf("%v %d \n\n %+v \n\n", TopicName, PartitionId, indexMap[TopicName][PartitionId])
@@ -78,14 +79,14 @@ func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) {
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".log"
 	fd, _ := os.Open(filePath)
 	index := offset
-	for finPos := initPos ;finPos < initPos + maxBytes ;  {
+	for finPos := initPos; finPos < initPos+maxBytes; {
 		index += 1
 		nextPos := indexMap[TopicName][PartitionId][strconv.Itoa(index)]
 		size := nextPos - finPos
 		b := make([]byte, size)
 		fd.ReadAt(b, int64(finPos))
 		var message service.Message
-		json.Unmarshal(b,&message)
+		json.Unmarshal(b, &message)
 		log.Printf("Read Message %+v\n\n", message)
 		finPos = nextPos
 	}
@@ -93,9 +94,9 @@ func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) {
 
 func offsetWriter(TopicName string, PartitionId int32, indexPersistanceCh chan bool) {
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".offset"
-	offsetfd, _ := os.OpenFile(filePath, os.O_WRONLY| os.O_CREATE, 0666)
+	offsetfd, _ := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
 	for {
-		<- indexPersistanceCh
+		<-indexPersistanceCh
 		b, _ := json.Marshal(currentOffset[TopicName][PartitionId])
 		offsetfd.WriteAt(b, 0)
 	}
@@ -110,7 +111,7 @@ func generateRoutines(TopicName string, PartitionId int32) {
 		os.MkdirAll(BaseDir+"/"+TopicName+"/"+strconv.Itoa(int(PartitionId)), 0777)
 		messageChanMap[TopicName] = make(map[int32](chan MessageRequest))
 		messageChanMap[TopicName][PartitionId] = make(chan MessageRequest)
-		indexPersistanceCh :=  make(chan bool)
+		indexPersistanceCh := make(chan bool)
 		readIndex(TopicName, PartitionId)
 		go logWriter(TopicName, PartitionId, indexPersistanceCh)
 		go offsetWriter(TopicName, PartitionId, indexPersistanceCh)
@@ -136,7 +137,7 @@ func getMeta() map[string][]int32 {
 			}
 		}
 	}
-	log.Println(m)
+	log.Printf("MetadataMap: %+v\n", m)
 	return m
 }
 
