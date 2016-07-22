@@ -28,7 +28,6 @@ func (this *ConsumerService) ConsumeMessage(fetchRequest *service.FetchRequest) 
 			storageService := StorageService{TopicName: topicName, Partition: partition}
 			messageSet := storageService.ReadMessages(int(fetchOffset), int(maxBytes))
 			//log.Printf("=>Read MessageSet: %+v\n", messageSet)
-
 			bytes, err := json.Marshal(messageSet)
 			if err != nil {
 				log.Println("Error in marshalling messageSet")

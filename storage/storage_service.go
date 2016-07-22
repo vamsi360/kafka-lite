@@ -23,16 +23,7 @@ func (this *StorageService) WriteMessages(messageSet *service.MessageSet, respCh
 }
 
 func (this *StorageService) ReadMessages(offset int, maxBytes int) *service.MessageSet {
-	messages := logReader(this.TopicName, this.Partition, offset, maxBytes)
-
-	messageAndOffsets := []service.MessageAndOffset{}
-	for _, message := range *messages {
-		messageAndOffset := service.MessageAndOffset{Message: message}
-		messageAndOffsets = append(messageAndOffsets, messageAndOffset)
-	}
-	messageSet := service.MessageSet{MessageAndOffsets: messageAndOffsets}
-
-	return &messageSet
+	return logReader(this.TopicName, this.Partition, offset, maxBytes)
 }
 
 type MessageRequest struct {

@@ -13,9 +13,9 @@ import (
 const BaseDir = "/tmp/kafka-lite/data"
 
 var (
-	handlers = make(map[string]map[int32]bool)
-	indexMap = make(map[string]map[int32]map[string]int)
-	currentOffset = make(map[string]map[int32]int64)
+	handlers        = make(map[string]map[int32]bool)
+	indexMap        = make(map[string]map[int32]map[string]int)
+	currentOffset   = make(map[string]map[int32]int64)
 	currentPosition = make(map[string]map[int32]int)
 )
 
@@ -49,10 +49,10 @@ func readIndex(TopicName string, PartitionId int32) (err error) {
 func logWriter(TopicName string, PartitionId int32) {
 	defer offsetWriter(TopicName, PartitionId)
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".log"
-	f, _ := os.OpenFile(filePath, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	f, _ := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	messageChan := messageChan(TopicName, PartitionId)
 	filePath = BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".index"
-	idxfd, _ := os.OpenFile(filePath, os.O_WRONLY | os.O_CREATE, 0666)
+	idxfd, _ := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
 	// read from persistant layer
 	for {
 		request := <-messageChan
@@ -61,7 +61,7 @@ func logWriter(TopicName string, PartitionId int32) {
 			currentOffset[TopicName][PartitionId] += 1
 			size, _ := f.Write(message)
 			currentPosition[TopicName][PartitionId] += size
-			indexMap[TopicName][PartitionId][strconv.Itoa(int(currentOffset[TopicName][PartitionId] - 1))] = currentPosition[TopicName][PartitionId]
+			indexMap[TopicName][PartitionId][strconv.Itoa(int(currentOffset[TopicName][PartitionId]-1))] = currentPosition[TopicName][PartitionId]
 		}
 		b, _ := json.Marshal(indexMap[TopicName][PartitionId])
 		idxfd.WriteAt(b, 0)
@@ -72,13 +72,14 @@ func logWriter(TopicName string, PartitionId int32) {
 	}
 }
 
-func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) *[]service.Message {
+func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) *service.MessageSet {
 	initPos := indexMap[TopicName][PartitionId][strconv.Itoa(offset)]
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".log"
 	fd, _ := os.Open(filePath)
 	index := offset
-	messages := []service.Message{}
-	for finPos := initPos; finPos < initPos + maxBytes; {
+
+	messageAndOffsets := []service.MessageAndOffset{}
+	for finPos := initPos; finPos < initPos+maxBytes; {
 		index += 1
 		nextPos := indexMap[TopicName][PartitionId][strconv.Itoa(index)]
 		if nextPos == 0 {
@@ -88,17 +89,22 @@ func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) *[
 		//log.Printf("nextPos: %d; finPos: %d; size: %d\n", nextPos, finPos, size)
 		b := make([]byte, size)
 		fd.ReadAt(b, int64(finPos))
+
 		var message service.Message
 		json.Unmarshal(b, &message)
-		messages = append(messages, message)
+
+		messageAndOffset := service.MessageAndOffset{Offset: int64(finPos), MessageSize: int32(size), Message: message}
+		messageAndOffsets = append(messageAndOffsets, messageAndOffset)
+
 		finPos = nextPos
 	}
-	return &messages
+	messageSet := service.MessageSet{MessageAndOffsets: messageAndOffsets}
+	return &messageSet
 }
 
 func offsetWriter(TopicName string, PartitionId int32) {
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".offset"
-	offsetfd, _ := os.OpenFile(filePath, os.O_WRONLY | os.O_CREATE, 0666)
+	offsetfd, _ := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE, 0666)
 	b, _ := json.Marshal(currentOffset[TopicName][PartitionId])
 	offsetfd.WriteAt(b, 0)
 }
@@ -109,7 +115,7 @@ func generateRoutines(TopicName string, PartitionId int32) {
 	}
 
 	if !handlers[TopicName][PartitionId] {
-		os.MkdirAll(BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)), 0777)
+		os.MkdirAll(BaseDir+"/"+TopicName+"/"+strconv.Itoa(int(PartitionId)), 0777)
 		messageChanMap[TopicName] = make(map[int32](chan MessageRequest))
 		messageChanMap[TopicName][PartitionId] = make(chan MessageRequest)
 		readIndex(TopicName, PartitionId)
