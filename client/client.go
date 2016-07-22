@@ -16,14 +16,14 @@ func main() {
 	for {
 		metadataRequest := GetMetadataRequest(conn)
 		metadataResponse := sender.send(conn, metadataRequest)
-		log.Printf("Metadata Response %+v\n", metadataResponse)
+
 		responseMessage := metadataResponse.ResponseMessage
-		var metadataResp service.MetadataResponse
-		err := json.Unmarshal(responseMessage, metadataResp)
+		var metadata map[string]service.TopicMetadata
+		err := json.Unmarshal(responseMessage, &metadata)
 		if err != nil {
 			log.Println("Error in Metadata response un-marshalling")
 		}
-		metadata := metadataResp.Metadata
+		log.Printf("MetadataResp: %+v\n", metadata)
 
 		produceRequest := GetProduceMessagesRequest(conn, metadata)
 		produceResponse := sender.send(conn, produceRequest)
@@ -31,7 +31,7 @@ func main() {
 
 		fetchRequest := GetFetchMessagesRequest(conn, metadata)
 		fetchResponse := sender.send(conn, fetchRequest)
-		log.Printf("Producer Response %+v\n", fetchResponse)
+		log.Printf("Fetch Response %+v\n", fetchResponse)
 
 		time.Sleep(1 * time.Second)
 	}
