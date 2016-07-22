@@ -84,7 +84,7 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 			fmt.Printf("ProduceResponse %+v\n", produceResponse)
 			produceResponseBytes, _ := json.Marshal(produceResponse)
 			responseService := &service.ResponseService{}
-			response = responseService.NewResponse(inputRequest.CorrelationId, produceResponseBytes)
+			response = responseService.NewResponse(inputRequest.CorrelationId, &produceResponseBytes)
 		default:
 			log.Printf("Un-supported apiKey %d - returning nil\n", apiKey)
 			response = nil

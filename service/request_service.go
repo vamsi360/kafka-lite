@@ -25,3 +25,12 @@ func (this *RequestService) NewProduceRequest(clientId string, requiredAcks int1
 	}
 	return nil, &Error{code: 2, msg: "Unable to serialize topicNames to json"}
 }
+
+func (this *RequestService) NewFetchRequest(clientId string, replicaId int32, maxWaitTime int32, minBytes int32, topicPartitionOffsets *[]TopicPartitionOffset) (*Request, *Error) {
+	fetchRequest := FetchRequest{ReplicaId: replicaId, MaxWaitTime: maxWaitTime, MinBytes: minBytes, TopicPartitionOffsets: *topicPartitionOffsets}
+	bytes, err := json.Marshal(fetchRequest)
+	if err == nil {
+		return this.NewRequest(API_KEY_FETCH, 1, 1, clientId, bytes), nil
+	}
+	return nil, &Error{code: 2, msg: "Unable to serialize topicNames to json"}
+}

@@ -108,10 +108,45 @@ type PartitionProduceResponse struct {
 }
 
 type TopicPartitionProduceResponse struct {
-	TopicName                 string                     `json:"topicName"`
+	TopicName                 string                      `json:"topicName"`
 	PartitionProduceResponses []*PartitionProduceResponse `json:"partitionProduceResponses"`
 }
 
 type ProduceResponse struct {
 	TopicPartitionProduceResponses []*TopicPartitionProduceResponse `json:"topicPartitionProduceResponses"`
+}
+
+type PartitionFetchOffset struct {
+	Partition   int32 `json:"partition"`
+	FetchOffset int64 `json:"fetchOffset"`
+	MaxBytes    int32 `json:"maxBytes"`
+}
+
+type TopicPartitionOffset struct {
+	TopicName            string               `json:"topicName"`
+	PartitionFetchOffset PartitionFetchOffset `json:"partitionFetchOffset"`
+}
+
+type FetchRequest struct {
+	ReplicaId             int32                  `json:"replicaId"`
+	MaxWaitTime           int32                  `json:"maxWaitTime"`
+	MinBytes              int32                  `json:"minBytes"`
+	TopicPartitionOffsets []TopicPartitionOffset `json:"topicPartitionOffsets"`
+}
+
+type PartitionFetchResponse struct {
+	Partition           int32      `json:"partition"`
+	ErrorCode           int16      `json:"errorCode"`
+	HighwaterMarkOffset int64      `json:"highwaterMarkOffset"`
+	MessageSetSize      int32      `json:"messageSetSize"`
+	MessageSet          MessageSet `json:"messageSet"`
+}
+
+type TopicPartitionFetchResponse struct {
+	TopicName              string                   `json:"topicName"`
+	PartitionFetchResponse []PartitionFetchResponse `json:"partitionFetchResponse"`
+}
+
+type FetchResponse struct {
+	TopicPartitionFetchResponses []TopicPartitionFetchResponse `json:"topicPartitionFetchResponses"`
 }
