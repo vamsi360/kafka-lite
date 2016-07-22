@@ -80,7 +80,8 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 				log.Println("Error in produce request")
 				break
 			}
-			produceResponse := this.produceMessage(&produceRequest)
+			producerSvc := storage.ProducerService{}
+			produceResponse := producerSvc.ProduceMessage(&produceRequest)
 			//fmt.Printf("ProduceResponse %+v\n", produceResponse)
 			produceResponseBytes, _ := json.Marshal(produceResponse)
 			responseService := &service.ResponseService{}
@@ -93,7 +94,8 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 				log.Println("Error in fetch request")
 				break
 			}
-			fetchResponse := this.consumeMessage(&fetchRequest)
+			consumerSvc := storage.ConsumerService{}
+			fetchResponse := consumerSvc.ConsumeMessage(&fetchRequest)
 			//fmt.Printf("FetchResponse %+v\n", fetchResponse)
 			fetchResponseBytes, _ := json.Marshal(fetchResponse)
 			responseService := &service.ResponseService{}
@@ -110,70 +112,4 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 			//log.Printf("Wrote response bytes to the client: %s", string(responseBytes[:]))
 		}
 	}
-}
-
-func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.ProduceResponse {
-	// log.Printf("Received ProduceRequest with requiredAcks %d\n", produceRequest.RequiredAcks)
-
-	chanMap := make(map[string][]chan *service.PartitionProduceResponse)
-	topicPartitionMessageSets := produceRequest.TopicPartitionMessageSets
-	for _, topicPartitionMessageSet := range topicPartitionMessageSets {
-		topicName := topicPartitionMessageSet.TopicName
-		partitionMessageSets := topicPartitionMessageSet.PartitionMessageSets
-		chanMap[topicName] = make([]chan *service.PartitionProduceResponse, len(topicPartitionMessageSet.PartitionMessageSets))
-		for idx, partitionMessageSet := range partitionMessageSets {
-			partition := partitionMessageSet.Partition
-			messageSet := partitionMessageSet.MessageSet
-
-			storageService := storage.StorageService{TopicName: topicName, Partition: partition}
-			respChan := make(chan *service.PartitionProduceResponse)
-			storageService.WriteMessages(&messageSet, &respChan)
-			chanMap[topicName][idx] = respChan
-		}
-	}
-	produceResponse := service.ProduceResponse{make([]*service.TopicPartitionProduceResponse, 0, len(topicPartitionMessageSets))}
-	for topic, chans := range chanMap {
-		topicPartitionProduceResponse := &service.TopicPartitionProduceResponse{topic, make([]*service.PartitionProduceResponse, len(chans))}
-		for idx, ch := range chans {
-			topicPartitionProduceResponse.PartitionProduceResponses[idx] = <-ch
-		}
-		produceResponse.TopicPartitionProduceResponses = append(produceResponse.TopicPartitionProduceResponses, topicPartitionProduceResponse)
-	}
-	return &produceResponse
-}
-
-func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *service.FetchResponse {
-	// log.Printf("Received FetchReqeust for %d minBytes from replicaId %d\n", fetchRequest.MinBytes, fetchRequest.ReplicaId)
-
-	topicPartitionFetchResponses := []service.TopicPartitionFetchResponse{}
-	topicPartitionOffsets := fetchRequest.TopicPartitionOffsets
-	for _, topicPartitionOffset := range topicPartitionOffsets {
-		topicName := topicPartitionOffset.TopicName
-		partitionFetchResponses := []service.PartitionFetchResponse{}
-		partitionFetchOffsets := topicPartitionOffset.PartitionFetchOffsets
-		for _, partitionFetchOffset := range partitionFetchOffsets {
-			partition := partitionFetchOffset.Partition
-			fetchOffset := partitionFetchOffset.FetchOffset
-			maxBytes := partitionFetchOffset.MaxBytes
-			//log.Printf("TopicName: %s; partition: %d; fetchOffset: %d; maxBytes: %d\n", topicName, partition, fetchOffset, maxBytes)
-
-			storageService := storage.StorageService{TopicName: topicName, Partition: partition}
-			messageSet := storageService.ReadMessages(int(fetchOffset), int(maxBytes))
-			//log.Printf("=>Read MessageSet: %+v\n", messageSet)
-
-			bytes, err := json.Marshal(messageSet)
-			if err != nil {
-				log.Println("Error in marshalling messageSet")
-				break
-			}
-			messageSetSize := int32(len(bytes))
-			partitionFetchResponse := service.PartitionFetchResponse{Partition: partition, ErrorCode: -1, HighwaterMarkOffset: -1, MessageSetSize: messageSetSize, MessageSet: *messageSet}
-			partitionFetchResponses = append(partitionFetchResponses, partitionFetchResponse)
-		}
-
-		topicPartitionFetchResponse := service.TopicPartitionFetchResponse{TopicName: topicName, PartitionFetchResponses: partitionFetchResponses}
-		topicPartitionFetchResponses = append(topicPartitionFetchResponses, topicPartitionFetchResponse)
-	}
-	fetchResponse := service.FetchResponse{TopicPartitionFetchResponses: topicPartitionFetchResponses}
-	return &fetchResponse
 }
