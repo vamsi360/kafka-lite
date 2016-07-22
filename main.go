@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 
 	"git.nm.flipkart.com/git/infra/kafka-lite/server"
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
@@ -42,7 +44,18 @@ func createTestEntities() {
 }
 
 func main() {
-	config := &server.ServerConfig{Host: "localhost", Port: 9100}
+	config := &server.ServerConfig{}
+
+	bytes, err := ioutil.ReadFile("serverconfig.json")
+	if err != nil {
+		log.Fatal("Error in reading config")
+	}
+	err = json.Unmarshal(bytes, config)
+	if err != nil {
+		log.Fatal("Error in decoding json config")
+	}
+
+	fmt.Printf("ServerConfig: %+v\n", config)
 	fmt.Printf("== Starting server on port %d ==\n", config.Port)
 	defer fmt.Println("== Stopping server ==")
 

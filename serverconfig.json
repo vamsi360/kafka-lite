@@ -1,0 +1,7 @@
+{
+  "logDir": "/tmp/kafka-lite/data",
+  "maxMessageSize": 1048576,
+  "brokerId": 1,
+  "port": 9100,
+  "host": "localhost"
+}

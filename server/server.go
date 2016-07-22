@@ -16,8 +16,11 @@ const (
 )
 
 type ServerConfig struct {
-	Host string
-	Port int
+	Host           string `json:"host"`
+	Port           int    `json:"port"`
+	BrokerId       int    `json:"brokerId"`
+	MaxMessageSize int    `json:"maxMessageSize"`
+	LogDir         string `json:"logDir"`
 }
 
 type SocketServer struct {
