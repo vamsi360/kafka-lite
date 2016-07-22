@@ -145,9 +145,11 @@ func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest)
 func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *service.FetchResponse {
 	log.Printf("Received FetchReqeust %+v\n", fetchRequest)
 
+	topicPartitionFetchResponses := []service.TopicPartitionFetchResponse{}
 	topicPartitionOffsets := fetchRequest.TopicPartitionOffsets
 	for _, topicPartitionOffset := range topicPartitionOffsets {
 		topicName := topicPartitionOffset.TopicName
+		partitionFetchResponses := []service.PartitionFetchResponse{}
 		partitionFetchOffsets := topicPartitionOffset.PartitionFetchOffsets
 		for _, partitionFetchOffset := range partitionFetchOffsets {
 			partition := partitionFetchOffset.Partition
@@ -155,8 +157,23 @@ func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *se
 			maxBytes := partitionFetchOffset.MaxBytes
 			log.Printf("TopicName: %s; partition: %d; fetchOffset: %d; maxBytes: %d\n", topicName, partition, fetchOffset, maxBytes)
 
+			storageService := storage.Service{TopicName: topicName, Partition: partition}
+			messageSet := storageService.ReadMessages(int(fetchOffset), int(maxBytes))
+			log.Printf("=>Read MessageSet: %+v\n", messageSet)
+
+			bytes, err := json.Marshal(messageSet)
+			if err != nil {
+				log.Println("Error in marshalling messageSet")
+				break
+			}
+			messageSetSize := int32(len(bytes))
+			partitionFetchResponse := service.PartitionFetchResponse{Partition: partition, ErrorCode: -1, HighwaterMarkOffset: -1, MessageSetSize: messageSetSize, MessageSet: *messageSet}
+			partitionFetchResponses = append(partitionFetchResponses, partitionFetchResponse)
 		}
+
+		topicPartitionFetchResponse := service.TopicPartitionFetchResponse{TopicName: topicName, PartitionFetchResponses: partitionFetchResponses}
+		topicPartitionFetchResponses = append(topicPartitionFetchResponses, topicPartitionFetchResponse)
 	}
-	fetchResponse := service.FetchResponse{}
+	fetchResponse := service.FetchResponse{TopicPartitionFetchResponses: topicPartitionFetchResponses}
 	return &fetchResponse
 }

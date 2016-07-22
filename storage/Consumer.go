@@ -49,6 +49,7 @@ func readIndex(TopicName string, PartitionId int32) (err error) {
 }
 
 func logWriter(TopicName string, PartitionId int32, indexPersistanceCh chan bool) {
+	log.Printf("=LogWriter for topic %s and partition %d\n", TopicName, PartitionId)
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".log"
 	f, _ := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	messageChan := messageChan(TopicName, PartitionId)
@@ -74,22 +75,29 @@ func logWriter(TopicName string, PartitionId int32, indexPersistanceCh chan bool
 	}
 }
 
-func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) {
+func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) *[]service.Message {
 	initPos := indexMap[TopicName][PartitionId][strconv.Itoa(offset)]
 	filePath := BaseDir + "/" + TopicName + "/" + strconv.Itoa(int(PartitionId)) + "/" + strconv.Itoa(0) + ".log"
 	fd, _ := os.Open(filePath)
 	index := offset
+	messages := []service.Message{}
 	for finPos := initPos; finPos < initPos+maxBytes; {
 		index += 1
 		nextPos := indexMap[TopicName][PartitionId][strconv.Itoa(index)]
+		if nextPos == 0 {
+			break
+		}
 		size := nextPos - finPos
+		log.Printf("nextPos: %d; finPos: %d; size: %d\n", nextPos, finPos, size)
 		b := make([]byte, size)
 		fd.ReadAt(b, int64(finPos))
 		var message service.Message
 		json.Unmarshal(b, &message)
+		messages = append(messages, message)
 		log.Printf("Read Message %+v\n\n", message)
 		finPos = nextPos
 	}
+	return &messages
 }
 
 func offsetWriter(TopicName string, PartitionId int32, indexPersistanceCh chan bool) {

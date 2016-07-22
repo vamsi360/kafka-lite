@@ -1,6 +1,10 @@
 package storage
 
-import "git.nm.flipkart.com/git/infra/kafka-lite/service"
+import (
+	"log"
+
+	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+)
 
 type Service struct {
 	TopicName string
@@ -20,9 +24,18 @@ func (service *Service) WriteMessages(messageSet *service.MessageSet, respChan *
 	return nil
 }
 
-func (service *Service) ReadMessages(offset int, maxBytes int) error {
+func (this *Service) ReadMessages(offset int, maxBytes int) *service.MessageSet {
+	messages := logReader(this.TopicName, this.Partition, offset, maxBytes)
 
-	return nil
+	messageAndOffsets := []service.MessageAndOffset{}
+	for _, message := range *messages {
+		messageAndOffset := service.MessageAndOffset{Message: message}
+		messageAndOffsets = append(messageAndOffsets, messageAndOffset)
+	}
+	messageSet := service.MessageSet{MessageAndOffsets: messageAndOffsets}
+	log.Printf("Sending readMessages: %+v\n", messageSet)
+
+	return &messageSet
 }
 
 type MessageRequest struct {

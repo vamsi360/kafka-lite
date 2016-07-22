@@ -143,8 +143,8 @@ type PartitionFetchResponse struct {
 }
 
 type TopicPartitionFetchResponse struct {
-	TopicName              string                   `json:"topicName"`
-	PartitionFetchResponse []PartitionFetchResponse `json:"partitionFetchResponse"`
+	TopicName               string                   `json:"topicName"`
+	PartitionFetchResponses []PartitionFetchResponse `json:"partitionFetchResponse"`
 }
 
 type FetchResponse struct {
