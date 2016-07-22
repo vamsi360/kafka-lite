@@ -17,8 +17,15 @@ func main() {
 		metadataRequest := GetMetadataRequest(conn)
 		metadataResponse := sender.send(conn, metadataRequest)
 		log.Printf("Metadata Response %+v\n", metadataResponse)
+		responseMessage := metadataResponse.ResponseMessage
+		var metadataResp service.MetadataResponse
+		err := json.Unmarshal(responseMessage, metadataResp)
+		if err != nil {
+			log.Println("Error in Metadata response un-marshalling")
+		}
+		metadata := metadataResp.Metadata
 
-		produceRequest := GetProduceMessagesRequest(conn)
+		produceRequest := GetProduceMessagesRequest(conn, metadata)
 		produceResponse := sender.send(conn, produceRequest)
 		log.Printf("Producer Response %+v\n", produceResponse)
 
@@ -38,16 +45,26 @@ func GetMetadataRequest(conn net.Conn) *service.Request {
 	return request
 }
 
-func GetProduceMessagesRequest(conn net.Conn) *service.Request {
+func GetFetchMessagesRequest(conn net.Conn) *service.Request {
+	// var topicPartitionOffsets []service.TopicPartitionOffset
+
+	return nil
+}
+
+func GetProduceMessagesRequest(conn net.Conn, metadata map[string]service.TopicMetadata) *service.Request {
 	requestSvc := service.RequestService{}
 	messageSvc := service.MessageService{}
 
-	topic1 := service.Topic{"topic1", 2}
-	topic2 := service.Topic{"topic2", 2}
-	topics := []service.Topic{topic1, topic2}
 	clientId := "client123"
 	requiredAcks := int16(1)
 	timeout := int32(60000)
+	topics := []service.Topic{}
+	for topicName := range metadata {
+		topicMetadata := metadata[topicName]
+		partitions := int32(len(topicMetadata.TopicPartitions))
+		topic := service.Topic{topicName, partitions}
+		topics = append(topics, topic)
+	}
 
 	var topicPartitionMessageSets []service.TopicPartitionMessageSet
 	for _, topic := range topics {

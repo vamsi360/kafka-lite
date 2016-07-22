@@ -123,8 +123,8 @@ type PartitionFetchOffset struct {
 }
 
 type TopicPartitionOffset struct {
-	TopicName            string               `json:"topicName"`
-	PartitionFetchOffset PartitionFetchOffset `json:"partitionFetchOffset"`
+	TopicName             string                 `json:"topicName"`
+	PartitionFetchOffsets []PartitionFetchOffset `json:"partitionFetchOffset"`
 }
 
 type FetchRequest struct {

@@ -85,6 +85,19 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 			produceResponseBytes, _ := json.Marshal(produceResponse)
 			responseService := &service.ResponseService{}
 			response = responseService.NewResponse(inputRequest.CorrelationId, &produceResponseBytes)
+		case service.API_KEY_FETCH:
+			fetchRequestBytes := inputRequest.RequestMessage
+			var fetchRequest service.FetchRequest
+			fetchRequestErr := json.Unmarshal(fetchRequestBytes, &fetchRequest)
+			if fetchRequestErr != nil {
+				log.Println("Error in fetch request")
+				break
+			}
+			fetchResponse := this.consumeMessage(&fetchRequest)
+			fmt.Printf("FetchResponse %+v\n", fetchResponse)
+			fetchResponseBytes, _ := json.Marshal(fetchResponse)
+			responseService := &service.ResponseService{}
+			response = responseService.NewResponse(inputRequest.CorrelationId, &fetchResponseBytes)
 		default:
 			log.Printf("Un-supported apiKey %d - returning nil\n", apiKey)
 			response = nil
@@ -100,7 +113,7 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 }
 
 func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.ProduceResponse {
-	log.Printf("Received ProduceRequest %v\n", produceRequest)
+	log.Printf("Received ProduceRequest %+v\n", produceRequest)
 
 	chanMap := make(map[string][]chan *service.PartitionProduceResponse)
 	topicPartitionMessageSets := produceRequest.TopicPartitionMessageSets
@@ -127,4 +140,23 @@ func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest)
 		produceResponse.TopicPartitionProduceResponses = append(produceResponse.TopicPartitionProduceResponses, topicPartitionProduceResponse)
 	}
 	return &produceResponse
+}
+
+func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *service.FetchResponse {
+	log.Printf("Received FetchReqeust %+v\n", fetchRequest)
+
+	topicPartitionOffsets := fetchRequest.TopicPartitionOffsets
+	for _, topicPartitionOffset := range topicPartitionOffsets {
+		topicName := topicPartitionOffset.TopicName
+		partitionFetchOffsets := topicPartitionOffset.PartitionFetchOffsets
+		for _, partitionFetchOffset := range partitionFetchOffsets {
+			partition := partitionFetchOffset.Partition
+			fetchOffset := partitionFetchOffset.FetchOffset
+			maxBytes := partitionFetchOffset.MaxBytes
+			log.Printf("TopicName: %s; partition: %d; fetchOffset: %d; maxBytes: %d\n", topicName, partition, fetchOffset, maxBytes)
+
+		}
+	}
+	fetchResponse := service.FetchResponse{}
+	return &fetchResponse
 }

@@ -23,8 +23,14 @@ func (this *Sender) send(conn net.Conn, request *service.Request) *service.Respo
 	conn.Write(bytes)
 	conn.Write([]byte("\n"))
 
-	rmessage, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print("Message from server: " + rmessage)
+	respBytes, _ := bufio.NewReader(conn).ReadBytes('\n')
+	fmt.Print("Message from server: " + string(respBytes))
 
-	return nil
+	var response service.Response
+	jsonErr = json.Unmarshal(respBytes, &response)
+	if jsonErr != nil {
+		log.Fatal("Error in un-marshalling response", jsonErr)
+	}
+
+	return &response
 }
