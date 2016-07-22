@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"log"
-
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
@@ -33,7 +31,6 @@ func (this *Service) ReadMessages(offset int, maxBytes int) *service.MessageSet 
 		messageAndOffsets = append(messageAndOffsets, messageAndOffset)
 	}
 	messageSet := service.MessageSet{MessageAndOffsets: messageAndOffsets}
-	log.Printf("Sending readMessages: %+v\n", messageSet)
 
 	return &messageSet
 }

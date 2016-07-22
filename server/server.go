@@ -63,7 +63,7 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 		if err != nil {
 			log.Println("Error in unmarshalling input request", err)
 		}
-		log.Printf("=>Msg received: %v\n", inputRequest)
+		//log.Printf("=>Msg received: %v\n", inputRequest)
 
 		var response *service.Response
 
@@ -81,7 +81,7 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 				break
 			}
 			produceResponse := this.produceMessage(&produceRequest)
-			fmt.Printf("ProduceResponse %+v\n", produceResponse)
+			//fmt.Printf("ProduceResponse %+v\n", produceResponse)
 			produceResponseBytes, _ := json.Marshal(produceResponse)
 			responseService := &service.ResponseService{}
 			response = responseService.NewResponse(inputRequest.CorrelationId, &produceResponseBytes)
@@ -94,7 +94,7 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 				break
 			}
 			fetchResponse := this.consumeMessage(&fetchRequest)
-			fmt.Printf("FetchResponse %+v\n", fetchResponse)
+			//fmt.Printf("FetchResponse %+v\n", fetchResponse)
 			fetchResponseBytes, _ := json.Marshal(fetchResponse)
 			responseService := &service.ResponseService{}
 			response = responseService.NewResponse(inputRequest.CorrelationId, &fetchResponseBytes)
@@ -107,13 +107,13 @@ func (this *SocketServer) handleConnection(conn net.Conn) {
 		if respErr == nil {
 			conn.Write(responseBytes)
 			conn.Write([]byte("\n"))
-			log.Printf("Wrote response bytes to the client: %s", string(responseBytes[:]))
+			//log.Printf("Wrote response bytes to the client: %s", string(responseBytes[:]))
 		}
 	}
 }
 
 func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest) *service.ProduceResponse {
-	log.Printf("Received ProduceRequest %+v\n", produceRequest)
+	//log.Printf("Received ProduceRequest %+v\n", produceRequest)
 
 	chanMap := make(map[string][]chan *service.PartitionProduceResponse)
 	topicPartitionMessageSets := produceRequest.TopicPartitionMessageSets
@@ -143,7 +143,7 @@ func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest)
 }
 
 func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *service.FetchResponse {
-	log.Printf("Received FetchReqeust %+v\n", fetchRequest)
+	//log.Printf("Received FetchReqeust %+v\n", fetchRequest)
 
 	topicPartitionFetchResponses := []service.TopicPartitionFetchResponse{}
 	topicPartitionOffsets := fetchRequest.TopicPartitionOffsets
@@ -155,11 +155,11 @@ func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *se
 			partition := partitionFetchOffset.Partition
 			fetchOffset := partitionFetchOffset.FetchOffset
 			maxBytes := partitionFetchOffset.MaxBytes
-			log.Printf("TopicName: %s; partition: %d; fetchOffset: %d; maxBytes: %d\n", topicName, partition, fetchOffset, maxBytes)
+			//log.Printf("TopicName: %s; partition: %d; fetchOffset: %d; maxBytes: %d\n", topicName, partition, fetchOffset, maxBytes)
 
 			storageService := storage.Service{TopicName: topicName, Partition: partition}
 			messageSet := storageService.ReadMessages(int(fetchOffset), int(maxBytes))
-			log.Printf("=>Read MessageSet: %+v\n", messageSet)
+			//log.Printf("=>Read MessageSet: %+v\n", messageSet)
 
 			bytes, err := json.Marshal(messageSet)
 			if err != nil {

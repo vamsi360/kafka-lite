@@ -1,14 +1,14 @@
 package service
 
 const (
-	API_KEY_PRODUCE             = 0
-	API_KEY_FETCH               = 1
-	API_KEY_METADATA            = 3
+	API_KEY_PRODUCE = 0
+	API_KEY_FETCH = 1
+	API_KEY_METADATA = 3
 	API_KEY_UPDATE_METADATA_KEY = 6
 )
 
 const (
-	ERROR                  = 1
+	ERROR = 1
 	METADATA_REQUEST_ERROR = 2
 )
 

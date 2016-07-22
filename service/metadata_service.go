@@ -26,7 +26,7 @@ func (this *MetadataService) GetMetadataResponse() *Response {
 	respMap[topic2.Name] = TopicMetadata{topic2.Name, []TopicPartition{topicPartition3, topicPartition4}}
 	metadataResp, err := responseSvc.NewMetadaResponse(respMap)
 	if err == nil {
-		log.Printf("MetatadataResponseMap %+v\n", respMap)
+		//log.Printf("MetatadataResponseMap %+v\n", respMap)
 		return metadataResp
 	}
 	return nil
