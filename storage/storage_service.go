@@ -4,12 +4,12 @@ import (
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
-type Service struct {
+type StorageService struct {
 	TopicName string
 	Partition int32
 }
 
-func (service *Service) WriteMessages(messageSet *service.MessageSet, respChan *chan *service.PartitionProduceResponse) (err error) {
+func (this *StorageService) WriteMessages(messageSet *service.MessageSet, respChan *chan *service.PartitionProduceResponse) (err error) {
 	msg := MessageRequest{Messages: make([][]byte, len(messageSet.MessageAndOffsets)), RespChan: respChan}
 	for idx, messageAndOffset := range messageSet.MessageAndOffsets {
 		if bytes, err := messageAndOffset.Message.SerializeJson(); err != nil {
@@ -18,11 +18,11 @@ func (service *Service) WriteMessages(messageSet *service.MessageSet, respChan *
 			msg.Messages[idx] = bytes
 		}
 	}
-	messageChan(service.TopicName, service.Partition) <- msg
+	messageChan(this.TopicName, this.Partition) <- msg
 	return nil
 }
 
-func (this *Service) ReadMessages(offset int, maxBytes int) *service.MessageSet {
+func (this *StorageService) ReadMessages(offset int, maxBytes int) *service.MessageSet {
 	messages := logReader(this.TopicName, this.Partition, offset, maxBytes)
 
 	messageAndOffsets := []service.MessageAndOffset{}

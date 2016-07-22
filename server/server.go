@@ -125,7 +125,7 @@ func (this *SocketServer) produceMessage(produceRequest *service.ProduceRequest)
 			partition := partitionMessageSet.Partition
 			messageSet := partitionMessageSet.MessageSet
 
-			storageService := storage.Service{TopicName: topicName, Partition: partition}
+			storageService := storage.StorageService{TopicName: topicName, Partition: partition}
 			respChan := make(chan *service.PartitionProduceResponse)
 			storageService.WriteMessages(&messageSet, &respChan)
 			chanMap[topicName][idx] = respChan
@@ -157,7 +157,7 @@ func (this *SocketServer) consumeMessage(fetchRequest *service.FetchRequest) *se
 			maxBytes := partitionFetchOffset.MaxBytes
 			//log.Printf("TopicName: %s; partition: %d; fetchOffset: %d; maxBytes: %d\n", topicName, partition, fetchOffset, maxBytes)
 
-			storageService := storage.Service{TopicName: topicName, Partition: partition}
+			storageService := storage.StorageService{TopicName: topicName, Partition: partition}
 			messageSet := storageService.ReadMessages(int(fetchOffset), int(maxBytes))
 			//log.Printf("=>Read MessageSet: %+v\n", messageSet)
 
