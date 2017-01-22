@@ -1,8 +1,10 @@
 Kafka-lite
+============
 
 Building a lite version of Kafka for fun and to solve some painpoints
+Has a working close-to-protocol producing but all of the things are hacked up towards the end
 
-Running:
+## Building and Running: ##n
 
 go build
 ./kafka-lite
