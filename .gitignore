@@ -14,3 +14,5 @@ tramp
 kafka-lite
 client/client
 
+main
+server/main
