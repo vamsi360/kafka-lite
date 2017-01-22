@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"github.com/vamsi-subhash/kafka-lite/service"
 )
 
 type ProducerService struct {

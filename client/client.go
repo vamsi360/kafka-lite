@@ -9,8 +9,8 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/client/core"
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"github.com/vamsi-subhash/kafka-lite/client/core"
+	"github.com/vamsi-subhash/kafka-lite/service"
 )
 
 func main() {

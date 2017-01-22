@@ -7,8 +7,8 @@ import (
 	"log"
 	"runtime"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/server"
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"github.com/vamsi-subhash/kafka-lite/server"
+	"github.com/vamsi-subhash/kafka-lite/service"
 )
 
 func createTestEntities() {

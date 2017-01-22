@@ -7,7 +7,7 @@ import (
 
 	"io/ioutil"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"github.com/vamsi-subhash/kafka-lite/service"
 )
 
 const BaseDir = "/tmp/kafka-lite/data"

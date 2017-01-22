@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
+	"github.com/vamsi-subhash/kafka-lite/service"
 )
 
 type ConsumerService struct {

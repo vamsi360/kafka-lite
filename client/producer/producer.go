@@ -1,6 +1,6 @@
 package producer
 
-import "git.nm.flipkart.com/git/infra/kafka-lite/client/core"
+import "github.com/vamsi-subhash/kafka-lite/client/core"
 
 type Producer struct {
 	accumulator *Accumulator

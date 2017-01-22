@@ -7,8 +7,8 @@ import (
 	"log"
 	"net"
 
-	"git.nm.flipkart.com/git/infra/kafka-lite/service"
-	"git.nm.flipkart.com/git/infra/kafka-lite/storage"
+	"github.com/vamsi-subhash/kafka-lite/service"
+	"github.com/vamsi-subhash/kafka-lite/storage"
 )
 
 const (
