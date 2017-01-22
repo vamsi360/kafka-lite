@@ -93,7 +93,7 @@ func logReader(TopicName string, PartitionId int32, offset int, maxBytes int) *s
 		var message service.Message
 		json.Unmarshal(b, &message)
 
-		messageAndOffset := service.MessageAndOffset{Offset: int64(finPos), MessageSize: int32(size), Message: message}
+		messageAndOffset := service.MessageAndOffset{Offset: int64(currentOffset[TopicName][PartitionId]), MessageSize: int32(size), Message: message}
 		messageAndOffsets = append(messageAndOffsets, messageAndOffset)
 
 		finPos = nextPos

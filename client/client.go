@@ -2,9 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
+	"time"
 
+	uuid "github.com/satori/go.uuid"
+
+	"git.nm.flipkart.com/git/infra/kafka-lite/client/core"
 	"git.nm.flipkart.com/git/infra/kafka-lite/service"
 )
 
@@ -14,6 +19,8 @@ func main() {
 	sender := Sender{}
 	metadataRequest := GetMetadataRequest(conn)
 	metadataResponse := sender.send(conn, metadataRequest)
+
+	offsetMap := make(map[core.TopicAndPartition]int64)
 
 	responseMessage := metadataResponse.ResponseMessage
 	var metadata map[string]service.TopicMetadata
@@ -32,16 +39,15 @@ func main() {
 		produceResponses = append(produceResponses, *produceResponse)
 		// log.Printf("Producer Response bytes size %d\n", len(produceResponse.ResponseMessage))
 
-		fetchRequest := GetFetchMessagesRequest(conn, metadata)
+		fetchRequest := GetFetchMessagesRequest(conn, metadata, offsetMap)
 		fetchResponse := sender.send(conn, fetchRequest)
 		fetchResponses = append(fetchResponses, *fetchResponse)
-		// log.Printf("Fetch Response bytes size %d\n", len(fetchResponse.ResponseMessage))
+		log.Printf("Fetch Response %s\n", string(fetchResponse.ResponseMessage[:]))
 
 		count += 1
+		time.Sleep(100 * time.Millisecond)
 		if count%100 == 0 {
 			log.Printf("%d produce&consume requests done", count)
-			// time.Sleep(10 * time.Millisecond)
-
 			produceResponses = []service.Response{}
 			fetchResponses = []service.Response{}
 		}
@@ -59,7 +65,7 @@ func GetMetadataRequest(conn net.Conn) *service.Request {
 	return request
 }
 
-func GetFetchMessagesRequest(conn net.Conn, metadata map[string]service.TopicMetadata) *service.Request {
+func GetFetchMessagesRequest(conn net.Conn, metadata map[string]service.TopicMetadata, offsetMap map[core.TopicAndPartition]int64) *service.Request {
 	topics := []service.Topic{}
 	for topicName := range metadata {
 		topicMetadata := metadata[topicName]
@@ -73,7 +79,14 @@ func GetFetchMessagesRequest(conn net.Conn, metadata map[string]service.TopicMet
 		var partitionFetchOffsets []service.PartitionFetchOffset
 		var i int32
 		for i = 0; i < topic.NoOfPartitions; i++ {
-			partitionFetchOffset := service.PartitionFetchOffset{i, 0, 10240}
+			topicAndPartition := core.TopicAndPartition{Topic: topic.Name, Partition: int32(i)}
+			offset, ok := offsetMap[topicAndPartition]
+			if !ok {
+				offset = 0
+				offsetMap[topicAndPartition] = 0
+			}
+			partitionFetchOffset := service.PartitionFetchOffset{i, offset, 1024}
+			offsetMap[topicAndPartition] = offset + 1
 			partitionFetchOffsets = append(partitionFetchOffsets, partitionFetchOffset)
 		}
 		topicPartitionOffset := service.TopicPartitionOffset{TopicName: topic.Name, PartitionFetchOffsets: partitionFetchOffsets}
@@ -113,7 +126,8 @@ func GetProduceMessagesRequest(conn net.Conn, metadata map[string]service.TopicM
 		var i int32
 		for i = 0; i < topic.NoOfPartitions; i++ {
 			//actual messages
-			message := messageSvc.NewMessage(1, 1, 1, []byte("key"), []byte("msg"))
+			rstr := fmt.Sprintf("%s", uuid.NewV4())
+			message := messageSvc.NewMessage(1, 1, 1, []byte(rstr), []byte(rstr))
 			messages := []*service.Message{message}
 
 			partitionMessageSet := NewPartitionMessageSet(topic.Name, i, messages)
